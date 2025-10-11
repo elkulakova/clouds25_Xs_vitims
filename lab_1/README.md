@@ -352,4 +352,165 @@ location ~* ^.+.(jpgljpeg|gif|png|css|js)${
 Поначалу, правда, было не совсем понятно как все реализовывать, пришлось много доп. инфы искать, чтобы лучше понять работу, однако мне очень помог код, который был показан на лекции, потому что как-то отложилась структура и некоторые команды стали привычными(мои ощущения).
 
 Зато теперь я знаю как делать кеширование, умею получать ssl-сертификаты несколькими способами, принудительно перенапралять http-запросы на https.
+```
+</details>
 
+# Звездочка *
+Для этой лабораторной выбрали сайт чая https://tea-24.ru/
+
+Будем проверять следующие уязвимости:
+* перебор страниц через ffuf
+* path traversal
+* что-то еще
+
+## ffuf
+Для работы с ffuf установила Golang и настроила переменные среды. Также командой 
+```
+git clone https://github.com/danielmiessler/SecLists.git
+```
+установила необходимы для работы словари, которые выглядят так (файл web-extensions.txt):
+<img width="1044" height="1070" alt="image" src="https://github.com/user-attachments/assets/3a923d36-d787-4959-8832-b20715449907" />
+
+
+### Fuzzing backend language
+Начала с проверкии расширений страницы:
+
+```
+C:\Users\Liudmila>ffuf -w "C:\Users\Liudmila\SecLists\Discovery\Web-Content\web-extensions.txt" -u "https://tea-24.ru/indexFUZZ" -ic
+
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : https://tea-24.ru/indexFUZZ
+ :: Wordlist         : FUZZ: C:\Users\Liudmila\SecLists\Discovery\Web-Content\web-extensions.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+.cgi                    [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 46ms]
+.pcap                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 112ms]::
+.php                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 110ms]::
+.jhtml                  [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 117ms]::
+.htm                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 115ms]::
+.log                    [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 89ms]
+.php4                   [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 97ms]
+.aspx                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 122ms]::
+.asp                    [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 104ms]
+.php5                   [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 102ms]
+.php2                   [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 119ms]
+.c                      [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 155ms]::
+.cfm                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 119ms]::
+.inc                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 129ms]::
+.phtml                  [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 133ms]
+.js                     [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 140ms]
+.jsa                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 133ms]::
+.shtml                  [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 150ms]
+.phps                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 173ms]::
+.html                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 176ms]::
+.nsf                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 201ms]::
+.com                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 207ms]::
+.hta                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 217ms]::
+.sql                    [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 182ms]
+.php7                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 199ms]::
+.pht                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 231ms]::
+.pl                     [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 191ms]
+.exe                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 234ms]::
+.jsp                    [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 203ms]
+.php6                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 219ms]::
+.php3                   [Status: 403, Size: 199, Words: 14, Lines: 8, Duration: 206ms]
+.rb                     [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 220ms]::
+.reg                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 237ms]::
+.mdb                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 256ms]::
+.css                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 268ms]::
+.dll                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 282ms]::
+.sh                     [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 284ms]::
+.phar                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 288ms]::
+.bat                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 287ms]::
+.json                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 297ms]::
+.swf                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 292ms]::
+.txt                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 270ms]::
+.xml                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 283ms]::
+:: Progress: [43/43] :: Job [1/1] :: 0 req/sec :: Duration: [0:00:00] :: Errors: 0 ::
+
+
+```
+
+
+Страница не вернула нигде код `200`, только `301` - редирект и `403` - запрещено (причем размер у таких ответов одинаковй, значит единая заглушка). Далее посмотрю, куда редиректит по .php:
+
+```
+curl -I https://tea-24.ru/index.php -> Location: /
+```
+перенаправляет на главную страницу
+и по .html
+```
+curl -I https://tea-24.ru/index.html
+HTTP/1.1 301 Moved Permanently
+Server: nginx/1.14.1
+Date: Sat, 11 Oct 2025 17:33:41 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: keep-alive
+X-Powered-By: PHP/7.3.33
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Status: 301 Moved Permanently
+Set-Cookie: PHPSESSID=26a844a95d34185a4af5416acf3dce59; expires=Sat, 25-Oct-2025 17:33:41 GMT; Max-Age=1209600; path=/; HttpOnly
+Location: /shophophophophophophophophophophophophophophophophophophophopndex.html
+Strict-Transport-Security: max-age=31536000;
+```
+с очень интригующей Location, попробую ее изучить
+```
+C:\Users\Liudmila>curl -I "https://tea-24.ru/shophophophophophophophophophophophophophophophophophophophophopndex.html"
+HTTP/1.1 301 Moved Permanently
+Server: nginx/1.14.1
+Date: Sat, 11 Oct 2025 17:39:35 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: keep-alive
+X-Powered-By: PHP/7.3.33
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Status: 301 Moved Permanently
+Set-Cookie: PHPSESSID=3360e1bb021c46c982da0dd44bb1952d; expires=Sat, 25-Oct-2025 17:39:34 GMT; Max-Age=1209599; path=/; HttpOnly
+Location: /shophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophopndex.html
+Strict-Transport-Security: max-age=31536000;
+```
+
+```
+curl -L -v "https://tea-24.ru/index.html"
+...
+< Location: /shophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophopndex.html
+< Strict-Transport-Security: max-age=31536000;
+* Ignoring the response-body
+< * Connection #0 to host tea-24.ru left intact
+* Issue another request to this URL: 'https://tea-24.ru/shophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophopndex.html'
+* Re-using existing https: connection with host tea-24.ru
+> GET /shophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophophopndex.html HTTP/1.1
+...
+```
+
+Итого получаем: при каждой новой попытке создается новая сессия, редирект на ту же строку постоянно повторяется (бесконечный цикл). Но в конце сервер таки вернул 
+```
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>403 Forbidden</title>
+</head><body>
+<h1>Forbidden</h1>
+<p>You don't have permission to access this resource.</p>
+</body></html>
+* Connection #0 to host tea-24.ru left intact
+```
+это означает, что сервер все же не допускает прямой доступ к бесконечному URL.
+УРА! ОШИБКА КОНФИГУРАЦИИ НАЙДЕНА!
