@@ -118,22 +118,47 @@ sudo mkdir /usr/local/var/www/bproj/
 и в эти папки положим базовые файлики index.html следующего содержания
 aproj/index.html:
 ```
-<center>
-  <p>
-      I am aproj!! lorem ipsum, hello world!
-  </p> 
-  <p>just filling empty space.</p>
-</center>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AProject is here for you!</title>
+</head>
+<body>
+    <h1>Hello, world!</h1>
+    <p>Lorem Ipsum</p>
+</body>
+</html>
 ```
 
 bproj/index.html:
 ```
-<center>
-  <p>
-      I am bproj!! lorem ipsum, hello world!
-  </p> 
-  <p>just filling empty space.</p>
-</center>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BProject is here for you!</title>
+</head>
+<body>
+    <h1>Hello, world!</h1>
+    <p>Lorem Ipsum</p>
+</body>
+</html>
+```
+
+для базовой страницы создадим свой файл
+```
+mkdir /usr/local/var/www/html
+touch  /usr/local/var/www/html base.html
+vim /usr/local/var/www/html/base.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>sorrowfully, we can't show you anything :(</title>
+</head>
+<body>
+	<h1>be careful and try again!</h1>
+    <p>you can't miss the greatest chance to see Petr Gumennik and Domestic Goose!</p>
+</body>
+</html>
 ```
 
 выдаем права не руту, чтобы использовать ключи сертификатов и наше содержимое сайтов и мочь запускать вообще сервак:
@@ -161,6 +186,7 @@ cat /etc/hosts
 сквозь мучения с редиректами, которые заняли часа 2, а то и больше… (а еще отец-девопс инженер тоже почти сломался)
 создаем такой файл (внизу хосты прописали):
 ```
+
 # user  _www;
 worker_processes  auto;
 
@@ -203,10 +229,10 @@ http {
 
         access_log  /opt/homebrew/etc/nginx/logs/host.access.log;
 
-        location / {
-            root   html;
-            index  index.html index.htm;
-        }
+        #location / {
+        #    root   html;
+        #    index  index.html index.htm;
+        #}
 
         #error_page  404              /404.html;
 
@@ -259,25 +285,6 @@ http {
     # HTTPS server
     
     server {
-        listen       443 ssl default_server;
-        server_name  _;
-
-        ssl_certificate      ssl/ca/rootCA.pem;
-        ssl_certificate_key  ssl/ca/rootCA.key;
-
-        ssl_session_cache    shared:SSL:1m;
-        ssl_session_timeout  5m;
-
-        ssl_ciphers  HIGH:!aNULL:!MD5;
-        ssl_prefer_server_ciphers  on;
-
-        location / {
-            root   html;
-            index  index.html index.htm;
-        }
-    }
-
-    server {
         access_log  /opt/homebrew/etc/nginx/logs/aproj_access.log;
         error_log  /opt/homebrew/etc/nginx/logs/aproj_error.log error;
 
@@ -303,6 +310,7 @@ http {
         listen 80;
         listen       443 ssl;
         server_name  aproj.local;
+        #return 301 https://$host$request_uri;
 
         ssl_certificate      ssl/aproj.local.crt;
         ssl_certificate_key  ssl/aproj.local.key;
@@ -316,7 +324,7 @@ http {
         root   /usr/local/var/www/aproj;
 
         location / {
-            try_files $uri $uri/ =404;
+            try_files $uri $uri/ /index.html =404;
         }
 
         location ^~ /images {
@@ -332,6 +340,7 @@ http {
         listen 80;
         listen       443 ssl;
         server_name  bproj.local;
+        #return 301 https://$host$request_uri;
 
         ssl_certificate      ssl/bproj.local.crt;
         ssl_certificate_key  ssl/bproj.local.key;
@@ -345,7 +354,7 @@ http {
         root   /usr/local/var/www/bproj;
 
         location / {
-            try_files $uri $uri/ =404;
+            try_files $uri $uri/ /index.html =404;
         }
 
         location ^~ /images {
@@ -354,6 +363,24 @@ http {
         }
     }
 
+    server {
+        listen       443 ssl default_server;
+        server_name  _;
+
+        ssl_certificate      ssl/ca/rootCA.pem;
+        ssl_certificate_key  ssl/ca/rootCA.key;
+
+        ssl_session_cache    shared:SSL:1m;
+        ssl_session_timeout  5m;
+
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers  on;
+
+        location / {
+            root   /usr/local/var/www/html;
+            index  base.html;
+        }
+    }
 
     include servers/*;
 }
