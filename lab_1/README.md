@@ -358,11 +358,6 @@ location ~* ^.+.(jpgljpeg|gif|png|css|js)${
 # Звездочка *
 Для этой лабораторной выбрали сайт чая https://tea-24.ru/
 
-Будем проверять следующие уязвимости:
-* перебор страниц через ffuf
-* path traversal
-* что-то еще
-
 ## ffuf
 Для работы с ffuf установила Golang и настроила переменные среды. Также командой 
 ```
@@ -372,7 +367,7 @@ git clone https://github.com/danielmiessler/SecLists.git
 <img width="1044" height="1070" alt="image" src="https://github.com/user-attachments/assets/3a923d36-d787-4959-8832-b20715449907" />
 
 
-### Fuzzing backend language
+### Ошибка конфигурации 1
 Начала с проверкии расширений страницы:
 
 ```
@@ -501,7 +496,7 @@ curl -L -v "https://tea-24.ru/index.html"
 ...
 ```
 
-Итого получаем: при каждой новой попытке создается новая сессия, редирект на ту же строку постоянно повторяется (бесконечный цикл). Но в конце сервер таки вернул 
+Итого получаем: при каждой новой попытке создается новая сессия, редирект на ту же строку постоянно повторяется (бесконечный цикл). Но в конце сервер-таки вернул 
 ```
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
@@ -514,3 +509,71 @@ curl -L -v "https://tea-24.ru/index.html"
 ```
 это означает, что сервер все же не допускает прямой доступ к бесконечному URL.
 УРА! ОШИБКА КОНФИГУРАЦИИ НАЙДЕНА!
+
+### Проверка конфигурации 2
+Хотелось бы, конечно, попробовать проверить директории /admin и подобные, а также поделать POST запросы, НО эти действия будут иметь больший вес ответственности, т.к. первое - попытка достичь скрытую информацию и второе - возможное изменениие состояния. Поэтому постараюсь аккуратно.
+Раз не хочется POST, то посмотрим, принимает ли его сервер
+```
+curl -X OPTIONS -i https://tea-24.ru/
+```
+по идее, должно было вывести Allow:, но возвращает html и сессию:
+```
+HTTP/1.1 200 Ok
+Server: nginx/1.14.1
+Date: Sat, 11 Oct 2025 19:55:19 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 63267
+Connection: keep-alive
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Status: 200 Ok
+X-Powered-By: PHP/7.3.33
+X-Generated-By: UMI.CMS
+X-CMS-Version: 22
+X-XSS-Protection: 0
+Set-Cookie: PHPSESSID=42ca8fd51197edb1272fe8db03d1a78e; expires=Sat, 25-Oct-2025 19:55:19 GMT; Max-Age=1209600; path=/; HttpOnly
+Strict-Transport-Security: max-age=31536000;
+```
+Что здесь печально: `X-XSS-Protection: 0`. Этот заголовок отключает встроенный браузерный фильтр против вредоносного кода (нет остановки загрузки страниц при обнаружении XSS атаки). 
+ПОТЕНЦИАЛЬНАЯ УГРОЗА!
+
+### Проверка 3
+Проверка phpAdmin - веб-интерфейса для управления базой данных.
+```
+curl -I -L --max-redirs 3 https://tea-24.ru/phpmyadmin
+HTTP/1.1 301 Moved Permanently
+Server: nginx/1.14.1
+Date: Sat, 11 Oct 2025 20:22:48 GMT
+Content-Type: text/html
+Content-Length: 185
+Location: https://tea-24.ru/phpmyadmin/
+Connection: keep-alive
+Strict-Transport-Security: max-age=31536000;
+
+HTTP/1.1 200 OK
+Server: nginx/1.14.1
+Date: Sat, 11 Oct 2025 20:22:48 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+X-Powered-By: PHP/7.2.24
+Set-Cookie: pma_lang_https=en; expires=Mon, 10-Nov-2025 20:22:48 GMT; Max-Age=2592000; path=/phpmyadmin/; SameSite=Strict; secure; HttpOnly
+Set-Cookie: phpMyAdmin_https=77f3626f580184cb39f507308e78ce42; path=/phpmyadmin/; SameSite=Strict; secure; HttpOnly
+X-ob_mode: 1
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+Content-Security-Policy: default-src 'self' ;script-src 'self' 'unsafe-inline' 'unsafe-eval' ;style-src 'self' 'unsafe-inline' ;img-src 'self' data:  *.tile.openstreetmap.org;object-src 'none';
+X-Content-Security-Policy: default-src 'self' ;options inline-script eval-script;referrer no-referrer;img-src 'self' data:  *.tile.openstreetmap.org;object-src 'none';
+X-WebKit-CSP: default-src 'self' ;script-src 'self'  'unsafe-inline' 'unsafe-eval';referrer no-referrer;style-src 'self' 'unsafe-inline' ;img-src 'self' data:  *.tile.openstreetmap.org;object-src 'none';
+X-XSS-Protection: 1; mode=block
+X-Content-Type-Options: nosniff
+X-Permitted-Cross-Domain-Policies: none
+X-Robots-Tag: noindex, nofollow
+Expires: Sat, 11 Oct 2025 20:22:48 +0000
+Cache-Control: no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0
+Pragma: no-cache
+Last-Modified: Sat, 11 Oct 2025 20:22:48 +0000
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31536000;
+```
+Из Интернета мимокрокодил может попасть на эту страницу. Из минусов: нет ограничения на попытки входа, нет двухфакторной аутентификации и видно весь стек разработки. Из плюсов: хорошая защита. 
