@@ -313,14 +313,15 @@ http {
         ssl_ciphers  HIGH:!aNULL:!MD5;
         ssl_prefer_server_ciphers  on;
 
+        root   /usr/local/var/www/aproj;
+
         location / {
-            root   /usr/local/var/www/aproj;
-            index  try_files $uri $uri/ =404;
+            try_files $uri $uri/ =404;
         }
 
         location ^~ /images {
             alias   /usr/local/var/www/aliasa;
-            index  try_files $uri $uri/ =404;
+            try_files $uri $uri/ =404;
         }
     }
 
@@ -341,14 +342,15 @@ http {
         ssl_ciphers  HIGH:!aNULL:!MD5;
         ssl_prefer_server_ciphers  on;
 
+        root   /usr/local/var/www/bproj;
+
         location / {
-            root   /usr/local/var/www/bproj;
-            index  try_files $uri $uri/ =404;
+            try_files $uri $uri/ =404;
         }
 
         location ^~ /images {
             alias   /usr/local/var/www/aliasb;
-            index  try_files $uri $uri/ =404;
+            try_files $uri $uri/ =404;
         }
     }
 
