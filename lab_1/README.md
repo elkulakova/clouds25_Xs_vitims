@@ -600,3 +600,157 @@ location: /shophophophophophophophophophophophophophophophophophophophopесущ
 strict-transport-security: max-age=31536000;
 ```
 Довольно сомнительно, что сервис не выдает ошибку 404, как должен это делать, а делает редирект. И очень смущает формирование пути: если все пути на сайте формируются таким образом, то это очень приятная работа для хакеров, которые захотят "восстановить" пароли от админских учетных записей или же просто попортить сайт. А еще по активировавшимся куки видно создание сессии, что приводит к бессмысленной трате ресурсов на неверные запросы и снова хоршей демонстрации паттерна формирования сессии.
+
+Попробуем постучаться в конфигурационные файлы, часть из которых предложила нейросеть, и увидим следующую картину:
+```
+elizabethkulakova@Laptop-Elizabeth ~ % curl -I "https://tea-24.ru/nginx_status" HTTP/2 301 server: nginx/1.14.1 date: Sat, 11 Oct 2025 23:58:22 GMT content-type: text/html; charset=UTF-8 x-powered-by: PHP/7.3.33 expires: Thu, 19 Nov 1981 08:52:00 GMT cache-control: no-store, no-cache, must-revalidate pragma: no-cache status: 301 Moved Permanently set-cookie: PHPSESSID=a19f5a734afc48a1abd71b7895ad1443; expires=Sat, 25-Oct-2025 23:58:22 GMT; Max-Age=1209600; path=/; HttpOnly location: /shophophophophophophophophophophophophophophophophophophophopginx_status strict-transport-security: max-age=31536000;
+
+elizabethkulakova@Laptop-Elizabeth ~ % curl -I "https://tea-24.ru/web.config" HTTP/2 301 server: nginx/1.14.1 date: Sat, 11 Oct 2025 23:59:13 GMT content-type: text/html; charset=UTF-8 x-powered-by: PHP/7.3.33 expires: Thu, 19 Nov 1981 08:52:00 GMT cache-control: no-store, no-cache, must-revalidate pragma: no-cache status: 301 Moved Permanently set-cookie: PHPSESSID=f571e92ac838aa7bfcdbfc89652a3c4a; expires=Sat, 25-Oct-2025 23:59:13 GMT; Max-Age=1209600; path=/; HttpOnly location: /shophophophophophophophophophophophophophophophophophophophopeb.config strict-transport-security: max-age=31536000;
+```
+Вероятно, никакие файлы nginx не должны быть доступны простым смертным и уводить пользователя в редирект вместо запрета на просмотр. И снова видим пример создания сессии тогда, когда это делать абсолютно не нужно, чтобы не тратить ресурсы и не рисковать безопасностью
+
+## Проверка 5
+К слову о безопасности. Есть в этом ответе что-то такое, что цепляет за душу
+```
+elizabethkulakova@Laptop-Elizabeth ~ % curl "https://tea-24.ru/sitemap.xml"
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
+  <loc>https://www.tea-24.ru/</loc>
+  <lastmod>2022-09-15T15:22:58+03:00</lastmod>
+  <priority>0.3</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>https://www.tea-24.ru/about/</loc>
+  <lastmod>2021-12-22T12:20:18+03:00</lastmod>
+  <priority>1</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>https://www.tea-24.ru/delivery_and_payment/</loc>
+  <lastmod>2023-10-12T13:53:32+03:00</lastmod>
+  <priority>1</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>http://dev.tea-24.ru/help/</loc>
+  <lastmod>2021-12-12T08:22:53+03:00</lastmod>
+  <priority>1</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>http://dev.tea-24.ru/remont_bytovoj_tehniki_na_domu/s_chego_nachat/</loc>
+  <lastmod>2021-12-12T08:21:25+03:00</lastmod>
+  <priority>0.5</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>https://www.tea-24.ru/pioneer_club/ya_vybral_m-150_chto_skazhete1/</loc>
+  <lastmod>2025-10-10T09:53:55+03:00</lastmod>
+  <priority>0.5</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>http://dev.tea-24.ru/super-podarki/whatsapp-image-2021-12-10-at-12-58-27-1/</loc>
+  <lastmod>2021-12-13T20:46:45+03:00</lastmod>
+  <priority>0.5</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>http://dev.tea-24.ru/super-podarki/whatsapp-image-2021-12-10-at-12-58-27-2/</loc>
+  <lastmod>2021-12-13T20:46:49+03:00</lastmod>
+  <priority>0.5</priority>
+  <changefreq>weekly</changefreq>
+</url><url>
+  <loc>http://dev.tea-24.ru/super-podarki/whatsapp-image-2021-12-10-at-12-58-27/</loc>
+  <lastmod>2021-12-13T20:47:08+03:00</lastmod>
+  <priority>0.5</priority>
+  <changefreq>weekly</changefreq>
+...
+```
+А за душу цепляет вот такое непосредственное и честное наличие ссылок на девелоперскую версию прямо в карте сайта. А как мы знаем по dev.my.itmo.su, версия разработчиков может содержать много интересных штучек в открытом доступе, о которых простым любителям согревающих напитков знать совершенно не нужно :) Это может повлечь за собой утечку данных, кражу идей (а код писать не так-то и просто) и все сопутсвующие прелести.
+
+Ну и также отмечу вот такой момент:
+```
+elizabethkulakova@Laptop-Elizabeth ~ % curl "https://tea-24.ru/robots.txt"
+User-Agent: Googlebot
+Disallow: /?
+Disallow: /notfound/
+Disallow: /admin
+Disallow: /index.php
+Disallow: /emarket/addToCompare
+Disallow: /emarket/basket
+Disallow: /emarket/gateway
+Disallow: /go-out.php
+Disallow: /cron.php
+Disallow: /filemonitor.php
+Disallow: /search
+Disallow: /captcha.php
+Disallow: /counter.php
+Disallow: /license_restore.php
+Disallow: /packer.php
+Disallow: /save_domain_keycode.php
+Disallow: /session.php
+Disallow: /standalone.php
+Disallow: /static_banner.php
+Disallow: /updater.php
+Disallow: /users/login_do
+Disallow: /autothumbs.php
+Disallow: /~/
+Disallow: /install.php
+Disallow: /installer.php
+
+User-Agent: Yandex
+Disallow: /?
+Disallow: /notfound/
+Disallow: /admin
+Disallow: /index.php
+Disallow: /emarket/addToCompare
+Disallow: /emarket/basket
+Disallow: /emarket/gateway
+Disallow: /go-out.php
+Disallow: /cron.php
+Disallow: /filemonitor.php
+Disallow: /search
+Disallow: /captcha.php
+Disallow: /counter.php
+Disallow: /license_restore.php
+Disallow: /packer.php
+Disallow: /save_domain_keycode.php
+Disallow: /session.php
+Disallow: /standalone.php
+Disallow: /static_banner.php
+Disallow: /updater.php
+Disallow: /users/login_do
+Disallow: /autothumbs.php
+Disallow: /~/
+Disallow: /install.php
+Disallow: /installer.php
+
+User-Agent: *
+Disallow: /?
+Disallow: /notfound/
+Disallow: /admin
+Disallow: /index.php
+Disallow: /emarket/addToCompare
+Disallow: /emarket/basket
+Disallow: /emarket/gateway
+Disallow: /go-out.php
+Disallow: /cron.php
+Disallow: /filemonitor.php
+Disallow: /search
+Disallow: /captcha.php
+Disallow: /counter.php
+Disallow: /license_restore.php
+Disallow: /packer.php
+Disallow: /save_domain_keycode.php
+Disallow: /session.php
+Disallow: /standalone.php
+Disallow: /static_banner.php
+Disallow: /updater.php
+Disallow: /users/login_do
+Disallow: /autothumbs.php
+Disallow: /~/
+Disallow: /install.php
+Disallow: /installer.php
+
+Host: https://tea-24.ru
+Sitemap: https://tea-24.ru/sitemap.xml
+Sitemap: https://tea-24.ru/sitemap-images.xml
+
+Crawl-delay: 3
+```
+Здесь отчетливо видно, что пути, которые должны быть в приватном доступе, открыты нараспашку, как русская душа. Как я поняла, все файлы, связанные с усьановкой, обновлением и хранением старых версий должны быть под строгим контролем и удаляться сразу же после применения во избежание всякого рода перезагрузок от доброжелателей. Ну и всякие служебные пути вроде `admin` тоже не должны быть доступны, так как перейти по ним вполне можно
+<img width="1044" height="1070" alt="image" src="https://github.com/user-attachments/assets/3a923d36-d787-4959-8832-b20715449907" />
