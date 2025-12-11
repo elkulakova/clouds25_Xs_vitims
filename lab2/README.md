@@ -19,6 +19,8 @@ FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y cowsay fortune && rm -rf /var/lib/apt/lists/*
 CMD ["/usr/games/cowsay", "Hello Lab2!"]
 ```
+<img width="1666" height="310" alt="image" src="https://github.com/user-attachments/assets/358ffb5b-47a5-4ddc-963b-b3e492221911" />
+
 
 ## 1) Использованиие ```ubuntu:latest``` вмеcто специализированного образа
 
@@ -111,3 +113,15 @@ CMD ["/usr/games/cowsay", "Hello Lab2!"]
 ### 3) Не включайте секреты и учетные сведения
 
 Изначально любой пользователь, который имеет доступ к образу, может получить сведения о секретах, записанные в Dockerfiles. Чтобы этого не произошло, для хранения секретной информации нужно использовать Docker BuildKit, а в командной строке указывать опцию --secret.
+
+## Создание образов и запуск контейнеров
+плохой образ (создание не сохранилось, но сам образ имеется)
+<img width="1376" height="122" alt="image" src="https://github.com/user-attachments/assets/03764de5-1e11-4526-9775-bd36944ece29" />
+<img width="2482" height="340" alt="image" src="https://github.com/user-attachments/assets/3bc55c47-0d33-48ee-89b1-3c64599f29a8" />
+т.е. контейнер был создан, но сразу завершил работу, что печально
+
+с хорошим
+<img width="2816" height="926" alt="image" src="https://github.com/user-attachments/assets/47b5b825-580f-4391-b23e-39245dfde1ed" />
+можно заметить, что вес образа сильно меньше
+<img width="2502" height="562" alt="image" src="https://github.com/user-attachments/assets/5053a1a8-c6bf-462e-b779-7c23865e6f80" />
+контейнер отработал и поздоровался с лабораторной
