@@ -131,5 +131,14 @@ CMD ["/usr/games/cowsay", "Hello Lab2!"]
 1. Хранение данных внутри контейнера
 <img width="2448" height="344" alt="image" src="https://github.com/user-attachments/assets/a9b29e1c-3636-4827-ac55-378cb10eb053" />
 интерактивная работа с контейнером, поэтому корова не запустилась
-2. Открываем UNIX-сокет
 
+2. Открываем UNIX-сокет
+<img width="2260" height="282" alt="image" src="https://github.com/user-attachments/assets/8867a047-ad87-4c9f-a19d-7a51adf8f704" />
+команды просто нет в докере
+
+3. Включайте секреты и учетные сведения
+потребовалось немного изменить докерфайл, чтобы секрет использовался
+<img width="1644" height="382" alt="image" src="https://github.com/user-attachments/assets/e08d15fa-4234-48e5-81e1-376dfd3adcb5" />
+
+<img width="2444" height="1080" alt="image" src="https://github.com/user-attachments/assets/a095c9d2-c00a-4593-8cba-d48bf24b9ae8" />
+даже в командной строке предупреждение
