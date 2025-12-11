@@ -9,6 +9,7 @@ FROM ubuntu:latest
 RUN apt-get update
 RUN apt-get install -y cowsay fortune
 ```
+<img width="1412" height="276" alt="image" src="https://github.com/user-attachments/assets/c238c2f1-e73d-4b78-8be9-f7227b3f780a" />
 
 Хороший докерфайл
 
